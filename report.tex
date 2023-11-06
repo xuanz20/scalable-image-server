@@ -1,0 +1,75 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{graphicx} % Required for inserting images.
+\usepackage[margin=25mm]{geometry}
+\usepackage[font=sf]{caption} % Changes font of captions.
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{siunitx}
+\usepackage{verbatim}
+\usepackage{hyperref} % Required for inserting clickable links.
+
+
+\title{Operating Systems and Distributed Systems\\Project 1 Part 1}
+\author{Zhen Xuan}
+
+\begin{document}
+\maketitle
+
+\section{Implementation}
+To work concurrently, we use one enqueue thread to push image names. When finished,
+it close the channel.\\
+We set up several dequeue threads to resize images. Each dequeue thread constantly gets
+an image and resize. When dequeue returns error code, channel is empty and thread will
+stop.\\
+When measuring latency, we support multiple enqueue threads and dequeue threads.
+When a thread performs an enqueue or dequeue, we measure its time and sends to another
+channel. Main thread will use this channel and collect timing result. Since totally 10000
+enqueue and dequeue, main thread will also collect each operation 10000 times and then
+return. Thus no dead lock will occur.
+\section{Result}
+We test our bounded queue's throughput and latency with different settings
+of thread number and capacity.
+\subsection{throughput}
+Our result is as follows: Fig.~\ref{throughput}
+\begin{figure}[htbp!]
+    \begin{center}
+        \includegraphics[width=\columnwidth]{./figure/throughput.png}
+    \end{center}
+    \caption{
+        throughput with different (thread numbers, capacity)
+    }
+    \label{throughput}
+\end{figure}\\
+Here baseline is sequential resizing’s throughput. We use one enqueue thread and multiple
+dequeue threads. We notice that the throughput gets larger as thread number grows. But
+not change very much with more capacity. This shows that capacity is not the bottleneck.
+More threads brings more concurrency, which will certainly increase the throughput.
+\subsection{latency}
+We measure enqueue and dequeue latency separately. Specifically, we test different ratio
+of enqueue thread number and dequeue thread number. Our result is as follows: Fig.~\ref{enqueue},
+Fig.~\ref{dequeue}
+\begin{figure}[htbp!]
+    \begin{center}
+        \includegraphics[width=\columnwidth]{./figure/enqueue_latency_cdf.png}
+    \end{center}
+    \caption{lantency with different (enqueue, dequeue, capacity)}
+    \label{enqueue}
+\end{figure}
+\begin{figure}[htbp!]
+    \begin{center}
+        \includegraphics[width=\columnwidth]{./figure/dequeue_latency_cdf.png}
+    \end{center}
+    \caption{lantency with different (enqueue, dequeue, capacity)}
+    \label{dequeue}
+\end{figure}
+The reason we measure latency separately and with different ratio is that we find dequeue
+latency is significantly larger than enqueue latency. (Enqueue latency is usually several
+microseconds, while dequeue is several thousands.)\\
+This suggests that enqueue is not the bottleneck as well as capacity, which also confirms
+what we find in throughput.\\
+With larger ratio of enqueue over dequeue, we see that dequeue latency drops, which
+strongly proves that enqueue is the bottleneck.
+\end{document}
